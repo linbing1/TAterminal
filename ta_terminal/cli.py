@@ -32,11 +32,14 @@ async def run_audio(config, store: StateStore) -> int:
         return 1
 
     output_path = store.audio_output_path(article)
-    progress = Progress()
-    async with progress.step("生成音频脚本（LLM）"):
-        script = await asyncio.to_thread(build_audio_script_for_current, article, config)
-    async with progress.step("合成音频"):
-        await synthesize(script, output_path, config.audio_voice)
+    if output_path.exists():
+        print(f"使用已有音频: {output_path.name}")
+    else:
+        progress = Progress()
+        async with progress.step("生成音频脚本（LLM）"):
+            script = await asyncio.to_thread(build_audio_script_for_current, article, config)
+        async with progress.step("合成音频"):
+            await synthesize(script, output_path, config.audio_voice)
 
     play_with_progress(output_path, config.audio_rate)
     return 0
