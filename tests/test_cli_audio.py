@@ -8,12 +8,16 @@ from ta_terminal.state_store import CurrentArticle
 class FakeStore:
     def __init__(self, article):
         self.article = article
+        self.saved_pid = None
 
     def load_current_article(self):
         return self.article
 
     def audio_output_path(self, article):
         return Path("/tmp/test-audio.mp3")
+
+    def save_playback_pid(self, pid):
+        self.saved_pid = pid
 
 
 def test_run_audio_requires_current_article(capsys):
@@ -44,6 +48,7 @@ def test_run_audio_builds_script_and_starts_playback(capsys, monkeypatch):
         class Result:
             path = output_path
             duration_label = "02:05"
+            pid = 9999
 
         return Result()
 
