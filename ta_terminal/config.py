@@ -29,6 +29,7 @@ class AppConfig:
     llm_api_key: str
     llm_model: str
     audio_voice: str
+    audio_rate: float
     state_dir: Path
     tanews_repo: Path
 
@@ -53,6 +54,7 @@ def load_config() -> AppConfig:
         llm_api_key=os.getenv("LLM_API_KEY", ""),
         llm_model=os.getenv("LLM_MODEL", "deepseek-chat"),
         audio_voice=os.getenv("AUDIO_VOICE", "zh-CN-YunjianNeural"),
+        audio_rate=float(os.getenv("AUDIO_RATE", "1.25")),
         state_dir=state_dir,
         tanews_repo=tanews_repo,
     )

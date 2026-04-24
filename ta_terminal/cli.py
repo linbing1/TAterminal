@@ -4,8 +4,9 @@ import argparse
 import asyncio
 import os
 import signal
+import sys
 
-from ta_terminal.audio_player import synthesize_and_play
+from ta_terminal.audio_player import play_with_progress, synthesize, synthesize_and_play
 from ta_terminal.config import load_config
 from ta_terminal.progress import Progress
 from ta_terminal.renderer import render_news
@@ -33,17 +34,21 @@ async def run_audio(config, store: StateStore) -> int:
         print("no current article, run `ta news` first")
         return 1
 
+    output_path = store.audio_output_path(article)
     progress = Progress()
     async with progress.step("生成音频脚本（LLM）"):
         script = await asyncio.to_thread(build_audio_script_for_current, article, config)
     async with progress.step("合成音频"):
-        result = await synthesize_and_play(
-            script,
-            store.audio_output_path(article),
-            config.audio_voice,
-        )
-    store.save_playback_pid(result.pid)
-    print(f"path: {result.path} | duration: {result.duration_label} | playback started")
+        duration_seconds = await synthesize(script, output_path, config.audio_voice)
+
+    try:
+        pid = await play_with_progress(output_path, duration_seconds, config.audio_rate)
+        store.save_playback_pid(pid)
+        store.clear_playback_pid()
+    except KeyboardInterrupt:
+        store.clear_playback_pid()
+        sys.stderr.write("\n")
+        return 1
     return 0
 
 
