@@ -8,7 +8,6 @@ from ta_terminal.state_store import CurrentArticle
 class FakeStore:
     def __init__(self, article):
         self.article = article
-        self.saved_pid = None
 
     def load_current_article(self):
         return self.article
@@ -16,11 +15,8 @@ class FakeStore:
     def audio_output_path(self, article):
         return Path("/tmp/test-audio.mp3")
 
-    def save_playback_pid(self, pid):
-        self.saved_pid = pid
-
     def clear_playback_pid(self):
-        self.saved_pid = None
+        pass
 
 
 def test_run_audio_requires_current_article(capsys):
@@ -31,7 +27,7 @@ def test_run_audio_requires_current_article(capsys):
     assert "no current article, run `ta news` first" in output
 
 
-def test_run_audio_builds_script_synthesizes_and_plays(capsys, monkeypatch):
+def test_run_audio_builds_script_synthesizes_and_plays(monkeypatch):
     article = CurrentArticle(
         title="中文标题",
         title_original="Original title",
@@ -39,20 +35,17 @@ def test_run_audio_builds_script_synthesizes_and_plays(capsys, monkeypatch):
         comment_count=88,
         published_at="2026-04-24T00:00:00+00:00",
         summary="summary text",
-        detail="why text",
+        detail="detail text",
         analysis_payload={},
     )
 
-    async def fake_synthesize(script, output_path, voice):
-        assert script == "script text"
-        assert output_path == Path("/tmp/test-audio.mp3")
-        assert voice == "voice-1"
-        return 125.4
+    calls = []
 
-    async def fake_play_with_progress(path, duration_seconds, rate):
-        assert path == Path("/tmp/test-audio.mp3")
-        assert duration_seconds == 125.4
-        assert rate == 1.25
+    async def fake_synthesize(script, output_path, voice):
+        calls.append(("synthesize", script, voice))
+
+    def fake_play_with_progress(path, rate):
+        calls.append(("play", path, rate))
         return 9999
 
     monkeypatch.setattr("ta_terminal.cli.build_audio_script_for_current", lambda a, c: "script text")
@@ -60,8 +53,8 @@ def test_run_audio_builds_script_synthesizes_and_plays(capsys, monkeypatch):
     monkeypatch.setattr("ta_terminal.cli.play_with_progress", fake_play_with_progress)
 
     config = type("Config", (), {"audio_voice": "voice-1", "audio_rate": 1.25})()
-    store = FakeStore(article)
-    exit_code = asyncio.run(run_audio(config, store))
+    exit_code = asyncio.run(run_audio(config, FakeStore(article)))
 
     assert exit_code == 0
-    assert store.saved_pid is None  # cleared after normal finish
+    assert calls[0] == ("synthesize", "script text", "voice-1")
+    assert calls[1] == ("play", Path("/tmp/test-audio.mp3"), 1.25)
