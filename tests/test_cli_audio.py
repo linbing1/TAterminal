@@ -15,8 +15,6 @@ class FakeStore:
     def audio_output_path(self, article):
         return Path("/tmp/test-audio.mp3")
 
-    def clear_playback_pid(self):
-        pass
 
 
 def test_run_audio_requires_current_article(capsys):

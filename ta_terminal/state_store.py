@@ -27,7 +27,6 @@ class StateStore:
         self.audio_dir.mkdir(parents=True, exist_ok=True)
         self.current_article_path = self.root / "current_article.json"
         self.read_articles_path = self.root / "read_articles.json"
-        self.playback_pid_path = self.root / "playback.pid"
 
     def load_read_links(self) -> set[str]:
         if not self.read_articles_path.exists():
@@ -53,20 +52,6 @@ class StateStore:
             json.dumps(asdict(article), ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
-
-    def save_playback_pid(self, pid: int) -> None:
-        self.playback_pid_path.write_text(str(pid), encoding="utf-8")
-
-    def load_playback_pid(self) -> int | None:
-        if not self.playback_pid_path.exists():
-            return None
-        try:
-            return int(self.playback_pid_path.read_text(encoding="utf-8").strip())
-        except ValueError:
-            return None
-
-    def clear_playback_pid(self) -> None:
-        self.playback_pid_path.unlink(missing_ok=True)
 
     def audio_output_path(self, article: CurrentArticle) -> Path:
         digest = hashlib.sha1(article.link.encode("utf-8")).hexdigest()[:12]

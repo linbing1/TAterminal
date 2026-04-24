@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import os
-import signal
-import sys
 
 from ta_terminal.audio_player import play_with_progress, synthesize
 from ta_terminal.config import load_config
@@ -41,25 +38,8 @@ async def run_audio(config, store: StateStore) -> int:
     async with progress.step("合成音频"):
         await synthesize(script, output_path, config.audio_voice)
 
-    pid = play_with_progress(output_path, config.audio_rate)
-    store.clear_playback_pid()
+    play_with_progress(output_path, config.audio_rate)
     return 0
-
-
-def run_stop(store: StateStore) -> int:
-    pid = store.load_playback_pid()
-    if pid is None:
-        print("no active playback")
-        return 1
-    try:
-        os.kill(pid, signal.SIGTERM)
-        store.clear_playback_pid()
-        print(f"stopped (pid {pid})")
-        return 0
-    except ProcessLookupError:
-        store.clear_playback_pid()
-        print("playback already finished")
-        return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -67,7 +47,6 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("news")
     subparsers.add_parser("audio")
-    subparsers.add_parser("stop")
     return parser
 
 
@@ -80,6 +59,4 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(run_news(config, store))
     if args.command == "audio":
         return asyncio.run(run_audio(config, store))
-    if args.command == "stop":
-        return run_stop(store)
     raise ValueError(f"Unsupported command: {args.command}")
