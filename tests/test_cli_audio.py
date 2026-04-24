@@ -58,9 +58,9 @@ def test_run_audio_builds_script_and_starts_playback(capsys, monkeypatch):
 
     config = type("Config", (), {"audio_voice": "voice-1"})()
     exit_code = asyncio.run(run_audio(config, FakeStore(article)))
-    output = capsys.readouterr().out
+    captured = capsys.readouterr()
 
     assert exit_code == 0
-    assert "生成音频脚本" in output
-    assert "合成音频" in output
-    assert "path: /tmp/test-audio.mp3 | duration: 02:05 | playback started" in output
+    assert "生成音频脚本" in captured.err
+    assert "合成音频" in captured.err
+    assert "path: /tmp/test-audio.mp3 | duration: 02:05 | playback started" in captured.out

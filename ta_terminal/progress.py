@@ -20,8 +20,8 @@ class Step:
         while True:
             elapsed = int(time.monotonic() - self._start)
             frame = _FRAMES[i % len(_FRAMES)]
-            sys.stdout.write(f"\r  {frame} {self.label}... {elapsed}s")
-            sys.stdout.flush()
+            sys.stderr.write(f"\r  {frame} {self.label}... {elapsed}s")
+            sys.stderr.flush()
             await asyncio.sleep(0.1)
             i += 1
 
@@ -39,8 +39,8 @@ class Step:
                 pass
         elapsed = time.monotonic() - self._start
         mark = "✓" if exc_type is None else "✗"
-        sys.stdout.write(f"\r  {mark} {self.label} ({elapsed:.1f}s)\n")
-        sys.stdout.flush()
+        sys.stderr.write(f"\r  {mark} {self.label} ({elapsed:.1f}s)\n")
+        sys.stderr.flush()
         if exc_type is None and self._on_complete:
             self._on_complete()
 
@@ -57,8 +57,8 @@ class Progress:
 
     def clear(self) -> None:
         for _ in range(self._completed):
-            sys.stdout.write(_CLEAR_LINE)
-        sys.stdout.flush()
+            sys.stderr.write(_CLEAR_LINE)
+        sys.stderr.flush()
         self._completed = 0
 
 
