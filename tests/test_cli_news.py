@@ -28,7 +28,7 @@ def test_run_news_prints_article_and_updates_state(capsys, monkeypatch):
         comment_count=88,
         published_at="2026-04-24T00:00:00+00:00",
         summary="summary text",
-        why_it_matters="why text",
+        detail="why text",
         analysis_payload={},
     )
     store = FakeStore()

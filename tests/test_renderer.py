@@ -10,15 +10,14 @@ def test_render_news_contains_sections_and_status_line():
         comment_count=89,
         published_at="2026-04-24T00:00:00+00:00",
         summary="这是一段总结。",
-        why_it_matters="这是一段价值判断。",
+        detail="这是一段详细内容。",
         analysis_payload={},
     )
 
     output = render_news(article)
 
-    assert "[TA] next unread hot article" in output
-    assert "Comments: 89" in output
-    assert "Summary" in output
-    assert "Why it matters" in output
+    assert "[TA]" in output
+    assert "评论 89" in output
+    assert "摘要" in output
+    assert "详细内容" in output
     assert "Next: run `ta audio`" in output
-    assert "marked as read" in output

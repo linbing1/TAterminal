@@ -84,4 +84,4 @@ def test_fetch_current_article_skips_read_links(monkeypatch, tmp_path):
     assert article.title == "中文标题"
     assert article.title_original == "Original title"
     assert article.summary == "中文总结"
-    assert article.why_it_matters == "Importance 5/5. 战术转折： detail text"
+    assert article.detail == "**战术转折：** detail text"

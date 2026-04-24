@@ -101,7 +101,7 @@ async def fetch_current_article(
         comment_count=selected.comment_count,
         published_at=selected.published.isoformat(),
         summary=item.overview,
-        why_it_matters=extract_why_it_matters(item.detail, item.importance),
+        detail=item.detail,
         analysis_payload=asdict(item),
     )
 

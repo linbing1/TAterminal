@@ -15,7 +15,7 @@ class CurrentArticle:
     comment_count: int
     published_at: str
     summary: str
-    why_it_matters: str
+    detail: str
     analysis_payload: dict[str, Any]
 
 

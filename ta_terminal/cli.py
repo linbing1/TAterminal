@@ -12,7 +12,9 @@ from ta_terminal.tanews_adapter import build_audio_script_for_current, fetch_cur
 
 
 async def run_news(config, store: StateStore) -> int:
-    article = await fetch_current_article(config, store.load_read_links(), progress=Progress())
+    progress = Progress()
+    article = await fetch_current_article(config, store.load_read_links(), progress=progress)
+    progress.clear()
     if article is None:
         print("no unread hot article found")
         return 1
