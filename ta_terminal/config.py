@@ -2,8 +2,23 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+
+
+def _default_tanews_repo() -> Path:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, check=True,
+            cwd=Path(__file__).parent,
+        )
+        # --git-common-dir returns the .git dir of the main worktree
+        main_repo = Path(result.stdout.strip()).resolve().parent
+        return main_repo.parent / "TAnews"
+    except Exception:
+        return Path(__file__).resolve().parents[2] / "TAnews"
 
 
 @dataclass(frozen=True)
@@ -21,10 +36,7 @@ class AppConfig:
 def load_config() -> AppConfig:
     state_dir = Path(os.getenv("TA_STATE_DIR", "~/.ta-terminal")).expanduser()
     tanews_repo = Path(
-        os.getenv(
-            "TANEWS_REPO",
-            str(Path(__file__).resolve().parents[2] / "TAnews"),
-        )
+        os.getenv("TANEWS_REPO", str(_default_tanews_repo()))
     ).expanduser()
     cookies = json.loads(os.getenv("ATHLETIC_COOKIES", "[]"))
 
