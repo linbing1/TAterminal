@@ -3,10 +3,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 
+from ta_terminal.audio_player import synthesize_and_play
 from ta_terminal.config import load_config
 from ta_terminal.renderer import render_news
 from ta_terminal.state_store import StateStore
-from ta_terminal.tanews_adapter import fetch_current_article
+from ta_terminal.tanews_adapter import build_audio_script_for_current, fetch_current_article
 
 
 async def run_news(config, store: StateStore) -> int:
@@ -21,10 +22,30 @@ async def run_news(config, store: StateStore) -> int:
     return 0
 
 
+async def run_audio(config, store: StateStore) -> int:
+    article = store.load_current_article()
+    if article is None:
+        print("no current article, run `ta news` first")
+        return 1
+
+    print("loading current article")
+    print("generating audio script")
+    script = build_audio_script_for_current(article, config)
+    print("playing audio")
+    result = await synthesize_and_play(
+        script,
+        store.audio_output_path(article),
+        config.audio_voice,
+    )
+    print(f"path: {result.path} | duration: {result.duration_label} | playback started")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ta")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("news")
+    subparsers.add_parser("audio")
     return parser
 
 
@@ -33,4 +54,8 @@ def main(argv: list[str] | None = None) -> int:
     config = load_config()
     store = StateStore(config.state_dir)
 
-    return asyncio.run(run_news(config, store))
+    if args.command == "news":
+        return asyncio.run(run_news(config, store))
+    if args.command == "audio":
+        return asyncio.run(run_audio(config, store))
+    raise ValueError(f"Unsupported command: {args.command}")
