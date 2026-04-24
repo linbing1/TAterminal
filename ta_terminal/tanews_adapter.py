@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import asyncio
 import re
 import sys
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
-from typing import Iterable, Protocol, TypeVar
+from typing import TYPE_CHECKING, Iterable, Protocol, TypeVar
 
 from ta_terminal.config import AppConfig
 from ta_terminal.state_store import CurrentArticle
+
+if TYPE_CHECKING:
+    from ta_terminal.progress import NoopProgress, Progress
 
 
 class HasHotFields(Protocol):
@@ -57,21 +61,35 @@ def load_tanews_dependencies(repo: Path) -> dict[str, object]:
     }
 
 
-async def fetch_current_article(config: AppConfig, read_links: set[str]) -> CurrentArticle | None:
+async def fetch_current_article(
+    config: AppConfig,
+    read_links: set[str],
+    progress: "Progress | NoopProgress | None" = None,
+) -> CurrentArticle | None:
+    from ta_terminal.progress import NoopProgress
+    if progress is None:
+        progress = NoopProgress()
+
     deps = load_tanews_dependencies(config.tanews_repo)
     collect_articles = deps["collect_articles"]
     scrape_full_texts = deps["scrape_full_texts"]
     analyze_articles = deps["analyze_articles"]
     llm_type = deps["LLMClient"]
 
-    articles = await collect_articles(config.page_url, config.athletic_cookies)
+    async with progress.step("抓取文章列表"):
+        articles = await collect_articles(config.page_url, config.athletic_cookies)
+
     selected = pick_next_unread(articles, read_links)
     if selected is None:
         return None
 
-    scraped_articles, _ = await scrape_full_texts([selected], config.athletic_cookies)
+    async with progress.step("抓取全文"):
+        scraped_articles, _ = await scrape_full_texts([selected], config.athletic_cookies)
+
     llm = llm_type(config.llm_base_url, config.llm_api_key, config.llm_model)
-    analyzed = analyze_articles(scraped_articles, llm)
+    async with progress.step("分析文章（LLM）"):
+        analyzed = await asyncio.to_thread(analyze_articles, scraped_articles, llm)
+
     if not analyzed:
         return None
 

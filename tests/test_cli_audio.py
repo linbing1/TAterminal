@@ -61,7 +61,6 @@ def test_run_audio_builds_script_and_starts_playback(capsys, monkeypatch):
     output = capsys.readouterr().out
 
     assert exit_code == 0
-    assert "loading current article" in output
-    assert "generating audio script" in output
-    assert "playing audio" in output
+    assert "生成音频脚本" in output
+    assert "合成音频" in output
     assert "path: /tmp/test-audio.mp3 | duration: 02:05 | playback started" in output

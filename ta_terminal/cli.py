@@ -5,13 +5,14 @@ import asyncio
 
 from ta_terminal.audio_player import synthesize_and_play
 from ta_terminal.config import load_config
+from ta_terminal.progress import Progress
 from ta_terminal.renderer import render_news
 from ta_terminal.state_store import StateStore
 from ta_terminal.tanews_adapter import build_audio_script_for_current, fetch_current_article
 
 
 async def run_news(config, store: StateStore) -> int:
-    article = await fetch_current_article(config, store.load_read_links())
+    article = await fetch_current_article(config, store.load_read_links(), progress=Progress())
     if article is None:
         print("no unread hot article found")
         return 1
@@ -28,15 +29,15 @@ async def run_audio(config, store: StateStore) -> int:
         print("no current article, run `ta news` first")
         return 1
 
-    print("loading current article")
-    print("generating audio script")
-    script = build_audio_script_for_current(article, config)
-    print("playing audio")
-    result = await synthesize_and_play(
-        script,
-        store.audio_output_path(article),
-        config.audio_voice,
-    )
+    progress = Progress()
+    async with progress.step("生成音频脚本（LLM）"):
+        script = await asyncio.to_thread(build_audio_script_for_current, article, config)
+    async with progress.step("合成音频"):
+        result = await synthesize_and_play(
+            script,
+            store.audio_output_path(article),
+            config.audio_voice,
+        )
     print(f"path: {result.path} | duration: {result.duration_label} | playback started")
     return 0
 

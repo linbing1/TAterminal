@@ -33,7 +33,7 @@ def test_run_news_prints_article_and_updates_state(capsys, monkeypatch):
     )
     store = FakeStore()
 
-    async def fake_fetch_current_article(config, read_links):
+    async def fake_fetch_current_article(config, read_links, **kwargs):
         assert read_links == {"https://example.com/old"}
         return article
 
@@ -50,7 +50,7 @@ def test_run_news_prints_article_and_updates_state(capsys, monkeypatch):
 
 
 def test_run_news_returns_one_when_no_unread_article(capsys, monkeypatch):
-    async def fake_fetch_current_article(config, read_links):
+    async def fake_fetch_current_article(config, read_links, **kwargs):
         return None
 
     monkeypatch.setattr("ta_terminal.cli.fetch_current_article", fake_fetch_current_article)
