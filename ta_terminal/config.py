@@ -14,8 +14,11 @@ def _default_tanews_repo() -> Path:
             capture_output=True, text=True, check=True,
             cwd=Path(__file__).parent,
         )
-        # --git-common-dir returns the .git dir of the main worktree
-        main_repo = Path(result.stdout.strip()).resolve().parent
+        # --git-common-dir may return a relative path; resolve against subprocess cwd
+        git_dir = Path(result.stdout.strip())
+        if not git_dir.is_absolute():
+            git_dir = Path(__file__).parent / git_dir
+        main_repo = git_dir.resolve().parent
         return main_repo.parent / "TAnews"
     except Exception:
         return Path(__file__).resolve().parents[2] / "TAnews"
